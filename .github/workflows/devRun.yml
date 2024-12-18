@@ -1,0 +1,72 @@
+name: Pre merge test
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  merge_test:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: psf/black@stable
+      - uses: isort/isort-action@v1
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          virtualenvs-path: .venv
+          installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      - name: Test with pytest
+        env:
+          EMAIL: ${{ secrets.EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          source .venv/bin/activate
+          xvfb-run pytest -m devRun --base-url ${{ vars.BASE_URL }}
+      - name: Auto-assign reviewers
+        uses: kentaro-m/auto-assign-action@v2.0.0
+        if: success()
+      - name: Link Git Information And Browser Version To Allure Report
+        working-directory: allure-results
+        if: always()
+        run: |
+          {
+           echo BUILD_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+           echo GIT_BRANCH=${{ github.head_ref || github.ref_name }}
+           echo GIT_COMMIT_ID=${{ github.sha }}
+           echo GIT_COMMIT_MESSAGE=$(git show -s --format=%s HEAD)
+           echo GIT_COMMIT_AUTHOR_NAME=$(git show -s --format='%ae' HEAD)
+           echo GIT_COMMIT_TIME=$(git show -s --format=%ci HEAD)
+           echo CHROME_VERSION=$(google-chrome --product-version)
+          } >> environment.properties
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        id: allure-report
+        with:
+          allure_results: allure-results
+          allure_report: allure-report
+          gh_pages: gh-pages
+          allure_history: allure-history
+      - name: Deploy Report To Github Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-history

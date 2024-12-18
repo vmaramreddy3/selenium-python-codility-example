@@ -1,0 +1,68 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
+[tool.isort]
+profile = "black"
+skip = ["env", "venv"]
+
+[tool.poetry]
+authors = ["Vijay Maramreddy <vj.reddy1908@gmail.com>"]
+description = "Selenium Python Codility example project with pytest and Allure report"
+homepage = ""
+name = "selenium-python-codility-example"
+packages = [{include = "selenium_python_codility_example"}]
+readme = "README.md"
+repository = ""
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+allure-pytest = "2.13.5"
+assertpy = "1.1"
+dataclasses-json = "0.6.7"
+deprecated = "1.2.15"
+mailinator-python-client-2 = "0.0.6"
+mysql-connector-python = "9.1.0"
+pytest = "8.3.3"
+pytest-base-url = "2.1.0"
+pytest-check = "2.4.1"
+pytest-dependency = "0.6.0"
+pytest-ordering = "0.6"
+pytest-rerunfailures = "15.0"
+pytest-split = "0.10.0"
+python = "^3.11"
+python-dotenv = "1.0.1"
+requests = "2.32.3"
+requests-toolbelt = "1.0.0"
+selenium = "4.26.1"
+tenacity = "9.0.0"
+visual-regression-tracker = "4.9.0"
+xlrd = "2.0.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "24.10.0"
+isort = "5.13.2"
+pre-commit = "4.0.1"
+
+[tool.pytest.ini_options]
+addopts = [
+  "--clean-alluredir",
+  "--alluredir=allure-results",
+  "--allure-link-pattern",
+  "issue:https://{}",
+  "--allure-link-pattern",
+  "link:https://{}",
+  "--allure-link-pattern",
+  "tms:https://{}",
+  "--color=yes",
+  "-s",
+  "-p no:logging"
+]
+base_url = 'https://https://www.codility.com'
+markers = [
+  "security: marks security tests",
+  "devRun: marks tests that run before merge to the main branch"
+]
+testpaths = [
+  "tests"
+]
